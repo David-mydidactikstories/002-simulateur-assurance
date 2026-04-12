@@ -43,6 +43,7 @@ function corrigerTranscription(texte) {
         [/\bcoffeecure\b/gi, 'CofiSecure'],
         [/\bcoff(?:ee|i|y)?[\s-]?(?:ce|se|s)\s*(?:en\s*ligne|online)?\b/gi, 'Cofidis'],
         [/confidis/gi, 'Cofidis'],
+        [/\bcoffee\b/gi, 'Cofidis'],
         [/\bJulia\b|\bJules\b/gi, 'Julien'],
         [/\b(Morel|Maesse|Maes|Mas)\b/gi, 'Masse'],
         // Centimes (Deepgram transcrit souvent "centiles", "centile", "sentimes")
@@ -323,6 +324,9 @@ FIN D'APPEL :
 • Si jauge atteint 10 → tu dis à David, à ta façon selon ton caractère, que tu es convaincu et prêt à prendre l'assurance. C'est ta DERNIÈRE phrase.
 • Si jauge atteint 0 → tu raccroches en disant EXPLICITEMENT pourquoi (ex: "Vous ne connaissez pas votre produit", "Vous me racontez n'importe quoi", "Je ne suis pas intéressé, au revoir"). C'est ta DERNIÈRE phrase.
 
+CONDITION PRIX OBLIGATOIRE AVANT D'ACCEPTER :
+Avant de dire "oui" ou d'accepter l'assurance (même si la jauge est à 10), tu dois avoir entendu le prix mensuel de la part de David. Si David n'a JAMAIS mentionné un prix (ex: "10,90€/mois", "moins de 11 euros", "36 centimes par jour"), tu lui poses la question AVANT d'accepter : "Et ça coûte combien par mois exactement ?" — puis tu attends sa réponse. Un client réel ne signe jamais sans connaître le prix.
+
 LANGUE — FRANÇAIS DE BELGIQUE :
 • Toujours "septante", "nonante", "quatre-vingts"
 • Expressions naturelles : "ça fait", "dites donc", "vous savez bien"
@@ -552,10 +556,15 @@ RÉPONDS UNIQUEMENT EN JSON : {"reponse": "phrase orale courte", "variation": en
 
         🚨 RÈGLE 5 — COHÉRENCE : Si le client a accepté de souscrire (fin positive), David a globalement bien fait son travail. Ton feedback doit être encourageant et cibler des points d'amélioration réels et précis, pas des suppositions.
 
-        🚨 RÈGLE 6 — UPSELL (IMPORTANT) : CofiSecure existe en 6 formules allant de 10,90€/mois (42.000€) à 29,90€/mois (140.000€). Un bon commercial ne se contente pas de la formule de base — il évalue si le client pourrait être intéressé par une formule supérieure et le propose.
-        - Si David a proposé une formule plus élevée ET que le client a accepté → FÉLICITE chaleureusement David dans "point_fort". C'est un excellent réflexe commercial.
+        🚨 RÈGLE 6 — UPSELL (IMPORTANT) : CofiSecure existe en 6 formules allant de 10,90€/mois (42.000€ standard, 84.000€ en accident de route) à 29,90€/mois (140.000€ standard, 280.000€ en accident de route). Un bon commercial ne se contente pas de la formule de base — il évalue si le client pourrait être intéressé par une formule supérieure et le propose.
+
+        ⚠️ DISTINCTION CRITIQUE — CE N'EST PAS UN UPSELL :
+        - Mentionner 84.000€ = ce n'est PAS un upsell. C'est simplement la formule de base (10,90€/mois) doublée pour un accident de la route. Si David parle de 84.000€ sans proposer une mensualité plus élevée, il vend toujours la formule d'entrée de gamme.
+        - Un VRAI upsell = David propose EXPLICITEMENT une formule à 14,90€/mois ou plus (ex: "pour 4 euros de plus par mois, vous passez à 56.000€", "je vous conseille la formule à 17,90€/mois"). Ce n'est un upsell QUE si David mentionne une mensualité supérieure à 10,90€.
+
+        - Si David a proposé une formule à mensualité plus élevée (14,90€ ou plus) ET que le client a accepté → FÉLICITE chaleureusement David dans "point_fort". C'est un excellent réflexe commercial.
         - Si David a proposé une formule plus élevée mais le client a refusé → Mentionne quand même positivement que David a eu le bon réflexe.
-        - Si David n'a parlé que de la formule à 10,90€ sans jamais explorer une formule supérieure (même quand le client semblait intéressé) → Mentionne-le dans "a_corriger" comme une opportunité manquée.
+        - Si David n'a parlé que de la formule à 10,90€ (même en mentionnant 84.000€) sans jamais proposer une formule supérieure → Mentionne-le dans "a_corriger" comme une opportunité manquée.
         - Si la conversation n'a pas eu le temps d'aborder les formules (appel court ou client difficile) → ne pénalise pas David pour ça.
 
         RÉPONDS EN JSON : {"diagnostic": "...", "point_fort": "...", "a_corriger": "..."}
