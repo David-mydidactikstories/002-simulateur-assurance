@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MDS Voice Simulator | Gamifié</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Plus+Jakarta+Sans:wght@700&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            background-color: #f8fafc; 
+            font-family: 'Outfit', sans-serif; 
+            overflow-x: hidden;
+            background-image: radial-gradient(circle at 15% 50%, rgba(100, 210, 185, 0.05) 0%, transparent 50%);
+        }
+        .font-headline { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .wave-bar { width: 4px; margin: 0 2px; background-color: #e2e8f0; border-radius: 99px; height: 6px; transition: all 0.2s; }
+        .speaking .wave-bar { animation: wave 0.6s infinite alternate; background-color: #64d2b9; }
+        @keyframes wave { 0% { height: 6px; } 100% { height: 40px; } }
+        
+        .chat-bubble-ai { background: white; border-left: 3px solid #64d2b9; border-radius: 12px; margin-bottom: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.03); border: 1px solid #f1f5f9; }
+        .chat-bubble-user { background: #eff6ff; border-radius: 12px; margin-bottom: 8px; text-align: right; color: #1e40af; border: 1px solid #dbeafe; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+
+        .live-transcription-glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 2px dashed #cbd5e1;
+            transition: border-color 0.3s ease;
+        }
+        .live-transcription-glass.active {
+            border-color: #64d2b9;
+            background: rgba(240, 253, 250, 0.8);
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <header class="max-w-6xl mx-auto w-full flex justify-between items-center mb-6">
+        <h1 class="text-xl font-black text-slate-900 tracking-tight font-headline">MDS Simulator <span class="text-teal-500 uppercase text-xs">Premium</span></h1>
+        <div class="flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-slate-200 text-[9px] font-black uppercase text-slate-500 shadow-sm">
+            <div id="status-dot" class="w-2 h-2 rounded-full bg-slate-300"></div> <span id="status-text">Hors-ligne</span>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <div class="lg:col-span-3">
+            <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col items-center">
+                <img id="ui-avatar" src="" class="w-20 h-20 rounded-full border-4 border-slate-50 shadow-md mb-3 object-cover">
+                <h2 id="ui-name" class="text-base font-bold text-slate-900">...</h2>
+                <p id="ui-role" class="text-[9px] font-black text-teal-600 uppercase mb-4 tracking-widest">...</p>
+                
+                <div class="w-full space-y-2 mb-4">
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 shadow-inner">
+                        <p class="text-[8px] font-black text-slate-400 uppercase mb-2 tracking-widest">Fiche Signalétique</p>
+                        <ul class="text-[11px] space-y-1.5 font-semibold text-slate-600">
+                            <li class="flex items-center gap-2"><i data-lucide="user" class="w-3 h-3 text-slate-400"></i> <span id="ui-age">...</span> / <span id="ui-situation">...</span></li>
+                            <li class="flex items-center gap-2"><i data-lucide="users" class="w-3 h-3 text-slate-400"></i> Enfants : <span id="ui-enfants">...</span></li>
+                            <li class="flex items-center gap-2"><i data-lucide="heart" class="w-3 h-3 text-slate-400"></i> <span id="ui-hobbies">...</span></li>
+                        </ul>
+                    </div>
+                    <div class="bg-teal-50/50 p-3 rounded-xl border border-teal-100 shadow-inner">
+                        <p class="text-[8px] font-black text-teal-600 uppercase mb-1 tracking-widest">Objection Cible</p>
+                        <p id="ui-desc" class="text-[11px] text-slate-600 italic leading-snug">...</p>
+                    </div>
+                </div>
+
+                <select id="level-selector" class="w-full text-[11px] p-2.5 rounded-xl bg-white border border-slate-200 font-bold outline-none shadow-sm"></select>
+            </div>
+        </div>
+
+        <div class="lg:col-span-6">
+            <div class="bg-white rounded-[2.5rem] p-8 border border-slate-200 shadow-xl flex flex-col items-center relative overflow-hidden">
+                
+                <div id="visualizer" class="flex items-center h-12 mb-4">
+                    <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+                </div>
+                
+                <div id="state-msg" class="text-slate-400 text-xs font-bold mb-4 h-4 uppercase tracking-tighter">Prêt pour l'appel</div>
+                
+                <button id="btn-call" class="w-24 h-24 rounded-full bg-white flex items-center justify-center shadow-2xl border-8 border-slate-50 hover:scale-105 active:scale-95 transition-all mb-8">
+                    <i data-lucide="phone" class="w-10 h-10 text-green-500" id="call-icon"></i>
+                </button>
+
+                <div id="live-container" class="w-full live-transcription-glass rounded-2xl p-4 h-28 flex flex-col justify-center relative overflow-hidden">
+                    <p id="live-speech" class="text-sm font-semibold text-slate-400 italic text-center leading-relaxed">
+                        En attente de votre voix...
+                    </p>
+                    <div class="absolute bottom-0 left-0 w-full h-4 bg-gradient-to-t from-white/30 to-transparent"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-3 flex flex-col gap-6">
+            <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
+                <div class="flex justify-between items-center mb-2">
+                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Taux de Conviction</p>
+                    <span id="score-txt" class="text-[10px] font-black text-teal-600">50%</span>
+                </div>
+                <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                    <div id="jauge" class="bg-gradient-to-r from-red-500 via-yellow-400 to-teal-400 h-full transition-all duration-1000" style="width: 50%"></div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col overflow-hidden">
+                <div class="p-3 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                    <span class="text-[8px] font-black uppercase tracking-widest text-slate-400">Historique Récent</span>
+                    <i data-lucide="history" class="w-3 h-3 text-slate-300"></i>
+                </div>
+                <div id="chat-logs" class="p-4 text-[11px] flex flex-col gap-2 min-h-[150px]">
+                    <div class="text-center text-slate-300 italic py-10">Aucun échange...</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL DEBRIEF -->
+    <div id="modal-debrief" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-[2rem] w-full max-w-md p-8 shadow-2xl border-t-8 border-t-teal-500 text-center transition-colors" id="modal-box">
+            <div id="debrief-icon" class="text-5xl mb-4">🏆</div>
+            <h2 id="debrief-title" class="text-xl font-black text-slate-900 mb-2 tracking-tight">Vente Réussie !</h2>
+            <div id="debrief-body" class="text-left bg-slate-50 p-5 rounded-xl text-xs leading-relaxed text-slate-600 space-y-3 mb-6"></div>
+            <button onclick="location.reload()" class="w-full bg-slate-900 text-white py-3.5 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-teal-500 transition-colors shadow-lg">Terminer l'analyse</button>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // Règle d'oralité stricte : On calme le jeu sur les clichés belges ("allez", "hein")
+        const SHORT_PROMPT_RULE = " RÈGLE D'ORALITÉ & RYTHME (CRUCIAL) : 1. FAIS TRÈS COURT (1 à 2 phrases max par réplique). 2. Ne déballe pas tes objections ou ta vie tout de suite ! Contente-toi de réagir brièvement à ce qu'il vient de dire. 3. Humanise : mange les mots (\"j'suis\", \"t'as\"). 4. Tu es Belge, mais N'ABUSE PAS des expressions clichés (pas de \"allez\", \"hein\" ou \"ça va\" à chaque phrase, reste naturel et subtil). 5. BUG MICRO : Si le micro écrit \"40 100\", comprends \"40 cents\" (0,40€). 6. Si jauge = 0, raccroche sèchement.";
+
+        const PROFILES = [
+            {
+                niveau: 1, nom: 'Julien Masse', role: 'Jeune Salarié IT · Liège', age: '28 ans', situation: 'Célibataire', enfants: 'Aucun', hobbies: 'Gaming, Voyages',
+                image: 'https://ui-avatars.com/api/?name=J+M&background=ccfbf1&color=0d9488', voiceId: '4sZ5JOztc9KMssP2KTxg', jauge: 6,
+                desc: "Sympa mais pense que l'assurance c'est pour les vieux, pas pour lui.",
+                prompt: `Tu es Julien Masse, 28 ans, salarié IT à Liège, célibataire. Sympa et détendu. TON OBJECTION PRINCIPALE : tu penses que l'assurance c'est pour les vieux et les retraités, pas pour toi à 28 ans. Tu conduis une voiture et tu voyages souvent. TRIGGER +2 : Si David t'explique que les accidents arrivent aux jeunes aussi et que si tu as un accident de voiture, tes proches reçoivent jusqu'à 42.000€ (doublé en accident de circulation), tu es clairement impressionné. TRIGGER +1 : Bonne réponse sur le prix (moins de 11€/mois, 36 centimes/jour). MAUVAISE RÉPONSE -2 : David dit que les maladies sont couvertes ou invente une garantie. Si David répond correctement à une question, tu passes à autre chose — ne répète pas. Parle en français de Belgique (septante, nonante).` + SHORT_PROMPT_RULE
+            },
+            {
+                niveau: 2, nom: 'Mme. Renard', role: 'Mère de famille · Namur', age: '35 ans', situation: 'Mariée', enfants: '2 (3 et 6 ans)', hobbies: 'Lecture, Randonnée',
+                image: 'https://ui-avatars.com/api/?name=M+R&background=3b82f6&color=fff', voiceId: 'PX78pFK18wppKjXLR0VX', jauge: 5,
+                desc: "Veut comprendre exactement ce qui se passe en cas d'accident de voiture.",
+                prompt: `Tu es Mme Renard, 35 ans, mère de famille à Namur, mariée avec 2 jeunes enfants. Prudente et protectrice. TON OBJECTION PRINCIPALE : tu veux savoir exactement ce qui se passe si ton mari ou toi avez un accident de voiture — est-ce que le capital est vraiment doublé ? TRIGGER +2 : David confirme clairement que oui, en cas d'accident de la circulation (voiture, vélo, piéton), le capital ET la rente sont DOUBLÉS — donc jusqu'à 84.000€ versés en 5 jours. TRIGGER +1 : Il explique bien que les bénéficiaires (ton mari et toi) sont désignés librement. MAUVAISE RÉPONSE -2 : David dit que l'accident en bus ou en avion est aussi doublé (faux), ou dit que les maladies sont couvertes. Parle en français de Belgique (septante, nonante).` + SHORT_PROMPT_RULE
+            },
+            {
+                niveau: 3, nom: 'M. Peeters', role: 'Plombier Artisan · Charleroi', age: '45 ans', situation: 'Marié', enfants: '2 ados', hobbies: 'Foot, Bricolage',
+                image: 'https://ui-avatars.com/api/?name=M+P&background=eab308&color=fff', voiceId: 'sYABVw6gLH8EJSY1WOcx', jauge: 4,
+                desc: "Souffre du dos. Veut savoir si son mal de dos chronique est couvert.",
+                prompt: `Tu es M. Peeters, 45 ans, plombier artisan à Charleroi. Pressé, direct, tu souffres du dos depuis 2 ans. TON OBJECTION PRINCIPALE : tu veux absolument savoir si ton mal de dos chronique est couvert. TRIGGER +2 : David t'explique honnêtement que non, le mal de dos (affection musculo-squelettique) est une exclusion explicite — MAIS qu'il reste couvert si demain il a un vrai accident sur un chantier ou sur la route, et que ça n'exclut pas son dos blessé dans un accident. Réponse honnête + argument alternatif = tu apprécies la franchise. TRIGGER +1 : Bonne réponse claire sur une autre exclusion ou garantie. MAUVAISE RÉPONSE -2 : David dit que le mal de dos EST couvert (mensonge grave). Si David dit "non" sans explication ni alternative → -1. Parle en français de Belgique (septante, nonante).` + SHORT_PROMPT_RULE
+            },
+            {
+                niveau: 4, nom: 'Léa Fontaine', role: 'Freelance IT · Bruxelles', age: '31 ans', situation: 'Célibataire', enfants: 'Aucun', hobbies: 'Yoga, Nouvelles technos',
+                image: 'https://ui-avatars.com/api/?name=L+F&background=a855f7&color=fff', voiceId: 'gC9jy9VUxaXAswovchvQ', jauge: 4,
+                desc: "Horreur des engagements. Veut pouvoir partir quand elle veut.",
+                prompt: `Tu es Léa Fontaine, 31 ans, freelance IT à Bruxelles. Indépendante, méfiante des contrats. TON OBJECTION PRINCIPALE : tu as horreur des engagements longue durée et tu veux savoir comment tu peux résilier si tu changes d'avis. TRIGGER +2 : David t'explique que tu peux résilier à TOUT MOMENT par simple lettre recommandée (effet à l'échéance mensuelle suivante), ET que tu as 14 jours après la signature pour te rétracter sans aucun frais. TRIGGER +1 : Il mentionne que le prix est modique (11€/mois) donc pas de grosse prise de risque financière. MAUVAISE RÉPONSE -2 : David dit qu'il faut attendre 1 an ou qu'il y a des pénalités de résiliation. MAUVAISE RÉPONSE -1 : Réponse vague sur la résiliation. Parle en français de Belgique (septante, nonante).` + SHORT_PROMPT_RULE
+            },
+            {
+                niveau: 5, nom: 'Luc Bodart', role: 'Cadre Supérieur · Louvain', age: '50 ans', situation: 'Recomposée', enfants: '3', hobbies: 'Golf, Oenologie',
+                image: 'https://ui-avatars.com/api/?name=L+B&background=6366f1&color=fff', voiceId: 'jN4TrAMAxJAuYzfhQotD', jauge: 4,
+                desc: "Famille recomposée. Veut contrôler précisément qui touche quoi.",
+                prompt: `Tu es Luc Bodart, 50 ans, cadre supérieur à Louvain-la-Neuve. Précis, exigeant. Tu as une famille recomposée (3 enfants de 2 relations différentes). TON OBJECTION PRINCIPALE : tu veux savoir précisément qui désigne les bénéficiaires et si tu peux choisir la répartition. TRIGGER +2 : David t'explique que les bénéficiaires sont LIBREMENT désignés dans le certificat d'adhésion et modifiables à tout moment — tu peux mettre qui tu veux, dans les proportions que tu veux. TRIGGER +1 : Il précise que si plusieurs bénéficiaires sont désignés, la répartition se fait selon tes souhaits. MAUVAISE RÉPONSE -2 : David dit que ça se partage automatiquement à parts égales sans possibilité de choisir (faux). MAUVAISE RÉPONSE -1 : Réponse vague ou incertaine sur ce point. Parle en français de Belgique (septante, nonante).` + SHORT_PROMPT_RULE
+            },
+            {
+                niveau: 6, nom: 'Nathalie Leclercq', role: 'Comptable · Mons', age: '42 ans', situation: 'Mariée', enfants: '1', hobbies: 'Cuisine, Bourse',
+                image: 'https://ui-avatars.com/api/?name=N+L&background=14b8a6&color=fff', voiceId: '8qqO0wh2fpa4hE9K15s0', jauge: 3,
+                desc: "Ultra-rationnelle. Cherche la faille : AVC et crises cardiaques sont-ils couverts ?",
+                prompt: `Tu es Nathalie Leclercq, 42 ans, comptable à Mons. Méthodique, froide, tu veux tout vérifier. TON OBJECTION PRINCIPALE : tu veux savoir si les AVC et crises cardiaques sont couverts — tu soupçonnes que non. TRIGGER +2 : David dit clairement NON (affections cardio-vasculaires = exclusion), mais explique avec tact que CofiSecure protège contre les ACCIDENTS imprévus, et que pour les maladies cardiaques il existe d'autres types d'assurances — honnêteté + orientation = tu respectes ça. TRIGGER +1 : Bonne réponse chiffrée sur le rapport qualité/prix. MAUVAISE RÉPONSE -2 : David dit que l'AVC ou l'infarctus SONT couverts (mensonge grave sur une exclusion explicite). MAUVAISE RÉPONSE -1 : David hésite ou donne une réponse floue. Parle en français de Belgique (septante, nonante).` + SHORT_PROMPT_RULE
+            },
+            {
+                niveau: 7, nom: 'M. Lecomte', role: 'Retraité · Bruges', age: '62 ans', situation: 'Veuf', enfants: 'Petits-enfants', hobbies: 'Jardinage',
+                image: 'https://ui-avatars.com/api/?name=M+L&background=0ea5e9&color=fff', voiceId: 'tMLzqy9GdtCGWHR3mzHT', jauge: 3,
+                desc: "Persuadé d'être trop vieux pour souscrire. A besoin d'être rassuré sur l'âge limite.",
+                prompt: `Tu es M. Lecomte, 62 ans, retraité veuf à Bruges (francophone). Pessimiste, tu penses que les assureurs refusent les gens de ton âge. TON OBJECTION PRINCIPALE : tu es convaincu que tu es trop vieux pour souscrire. TRIGGER +2 : David te confirme que l'âge limite de souscription est 69 ans — donc à 62 ans tu peux encore souscrire, et l'assurance te couvrira jusqu'à tes 75 ans. Pas d'examen médical requis. TRIGGER +1 : Il mentionne que tes petits-enfants pourraient être bénéficiaires. MAUVAISE RÉPONSE -2 : David dit que la limite est 65 ans ou moins, ou qu'il faut un examen médical. MAUVAISE RÉPONSE -1 : David hésite sur l'âge limite ou donne une réponse incertaine. Parle en français de Belgique (septante, nonante).` + SHORT_PROMPT_RULE
+            },
+            {
+                niveau: 8, nom: 'Sarah Bastin', role: 'Commerçante · Verviers', age: '38 ans', situation: 'Cohabitante légale', enfants: '2', hobbies: 'Théâtre',
+                image: 'https://ui-avatars.com/api/?name=S+B&background=22c55e&color=fff', voiceId: 'gXREIEvPOCZDQTLfXouF', jauge: 2,
+                desc: "Méfiante et agressive. A déjà été arnaquée par un assureur.",
+                prompt: `Tu es Sarah Bastin, 38 ans, commerçante à Verviers. Méfiante, directe, facilement irritable. Tu as déjà signé un contrat d'assurance qui ne couvrait pas ce qu'on t'avait promis. TON OBJECTION PRINCIPALE : tu ne fais plus confiance aux assureurs et tu t'attends à ce qu'on te cache des exclusions. TRIGGER +2 : David annonce SPONTANÉMENT les exclusions principales AVANT que tu ne les demandes (mal de dos, maladies, alcool) ET mentionne le droit de rétractation 14 jours sans frais — cette transparence proactive te désarme. TRIGGER +1 : Il répond honnêtement à une exclusion sans minimiser. MAUVAISE RÉPONSE -2 : David minimise les exclusions, les cache, ou est sur la défensive quand tu l'accuses. MAUVAISE RÉPONSE -1 : David ne mentionne pas le droit de rétractation quand tu exprimes ta méfiance. Parle en français de Belgique (septante, nonante).` + SHORT_PROMPT_RULE
+            },
+            {
+                niveau: 9, nom: 'Antoine Claes', role: 'Avocat · Bruxelles', age: '48 ans', situation: 'Marié', enfants: 'Aucun', hobbies: 'Voitures collection',
+                image: 'https://ui-avatars.com/api/?name=A+C&background=f97316&color=fff', voiceId: 'XKm1rpsDP34oBWwJsXb0', jauge: 2,
+                desc: "Arrogant et provocateur. Teste l'exclusion alcool au volant pour piéger David.",
+                prompt: `Tu es Antoine Claes, 48 ans, avocat à Bruxelles. Arrogant, condescendant, tu collectionnes les voitures. TON OBJECTION PRINCIPALE : tu veux savoir si un accident avec de l'alcool est couvert — tu poses la question de façon provocatrice pour mettre David en difficulté. TRIGGER +2 : David répond avec calme et précision que NON, si le taux d'alcoolémie dépasse le taux légal belge c'est une exclusion explicite — sans se laisser déstabiliser ni être moralisateur. Tu respectes quelqu'un qui connaît son produit et reste professionnel sous pression. TRIGGER +1 : David gère bien une autre objection juridique ou technique. MAUVAISE RÉPONSE -2 : David dit que l'alcool au volant EST couvert (mensonge grave), ou perd ses moyens face à ta provocation. MAUVAISE RÉPONSE -1 : David hésite, bafouille ou est mal à l'aise. Parle en français de Belgique (septante, nonante).` + SHORT_PROMPT_RULE
+            },
+            {
+                niveau: 10, nom: 'Richard — BOSS FINAL', role: 'Directeur Achat · Anvers', age: '55 ans', situation: 'Marié', enfants: '4', hobbies: 'Chasse, Poker',
+                image: 'https://ui-avatars.com/api/?name=R&background=fee2e2&color=ef4444', voiceId: 'aaxksyasKjsS6ULJLmd3', jauge: 1,
+                desc: "Zéro patience. Veut les chiffres clés en 30 secondes. Une hésitation = raccroché.",
+                prompt: `Tu es Richard, 55 ans, directeur achat à Anvers. Glacial, expéditif, tu détestes perdre du temps. TES RÉPONSES : maximum 5-6 mots à chaque fois. TON OBJECTION PRINCIPALE : tu veux les chiffres concrets et rien d'autre. TRIGGER +2 : David donne DIRECTEMENT les chiffres clés sans blabla : prix (10,90€/mois), capital max (50.000€), total sur 18 mois (140.000€), doublement accident. TRIGGER +1 : Réponse courte et précise à une question factuelle. MAUVAISE RÉPONSE -2 : David hésite, dit "euh", tourne autour du pot, ou se trompe sur un chiffre. RACCROCHAGE D'URGENCE : toute phrase de plus de 15 mots de David = tu raccroches immédiatement ("Trop long. Au revoir."). Parle en français de Belgique (septante, nonante).` + SHORT_PROMPT_RULE
+            }
+        ];
+
+        let current = PROFILES[0];
+        let ws = null;
+        let isCalling = false;
+        let audioCtx = null;
+        let scriptProcessor = null;
+        let audioQueue = [];
+        let isPlaying = false;
+        let pendingGameOver = null;
+
+        const btnCall = document.getElementById('btn-call');
+        const callIcon = document.getElementById('call-icon');
+        const jaugeEl = document.getElementById('jauge');
+        const scoreTxt = document.getElementById('score-txt');
+        const levelSelector = document.getElementById('level-selector');
+        const liveSpeech = document.getElementById('live-speech');
+        const liveContainer = document.getElementById('live-container');
+        const chatLogs = document.getElementById('chat-logs');
+
+        PROFILES.forEach((p, i) => { const o = document.createElement('option'); o.value = i; o.text = `Niveau ${p.niveau} : ${p.nom}`; levelSelector.add(o); });
+
+        function updateUI() {
+            document.getElementById('ui-name').innerText = current.nom;
+            document.getElementById('ui-role').innerText = current.role;
+            document.getElementById('ui-avatar').src = current.image;
+            document.getElementById('ui-desc').innerText = current.desc;
+            
+            document.getElementById('ui-age').innerText = current.age;
+            document.getElementById('ui-situation').innerText = current.situation;
+            document.getElementById('ui-enfants').innerText = current.enfants;
+            document.getElementById('ui-hobbies').innerText = current.hobbies;
+
+            jaugeEl.style.width = (current.jauge * 10) + "%";
+            scoreTxt.innerText = (current.jauge * 10) + "%";
+        }
+
+        levelSelector.onchange = (e) => { if(isCalling) location.reload(); current = PROFILES[e.target.value]; updateUI(); };
+
+        // --- GESTION DES SONS ---
+        function ensureAudioCtx() {
+            if (!audioCtx) {
+                try { audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 }); } catch(e) {
+                    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e2) {}
+                }
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playSuccessTone() {
+            ensureAudioCtx();
+            if (!audioCtx) return;
+            const gainNode = audioCtx.createGain();
+            gainNode.connect(audioCtx.destination);
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            // Arpège de victoire (Do Mi Sol Do)
+            const freqs = [523.25, 659.25, 783.99, 1046.50];
+            freqs.forEach((freq, i) => {
+                const osc = audioCtx.createOscillator();
+                osc.type = 'sine';
+                osc.frequency.value = freq;
+                osc.connect(gainNode);
+                osc.start(audioCtx.currentTime + i * 0.15);
+                osc.stop(audioCtx.currentTime + i * 0.15 + 0.4);
+            });
+            gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 2);
+        }
+
+        function playHangupTone() {
+            ensureAudioCtx();
+            if (!audioCtx) return;
+            const t = audioCtx.currentTime;
+            // Tonalité occupation européenne (Bip... Bip... Bip...)
+            for(let i=0; i<4; i++) {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.value = 425; 
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                gain.gain.setValueAtTime(0.1, t + (i * 0.5));
+                gain.gain.setValueAtTime(0, t + (i * 0.5) + 0.25);
+                osc.start(t + (i * 0.5));
+                osc.stop(t + (i * 0.5) + 0.25);
+            }
+        }
+
+        function showGameOverModal(data) {
+            const modalBox = document.getElementById('modal-box');
+            
+            // Déclenche le son de victoire ou de défaite + Changement de bordure
+            if (data.win) {
+                playSuccessTone();
+                modalBox.classList.replace('border-t-red-500', 'border-t-teal-500');
+            } else {
+                playHangupTone();
+                modalBox.classList.replace('border-t-teal-500', 'border-t-red-500');
+            }
+
+            document.getElementById('modal-debrief').classList.replace('hidden', 'flex');
+            document.getElementById('debrief-icon').innerText = data.win ? '🏆' : '💀';
+            document.getElementById('debrief-title').innerText = data.win ? 'Vente Réussie !' : 'Le client a raccroché';
+            
+            if (data.debrief) {
+                document.getElementById('debrief-body').innerHTML = `
+                    <p><b>Débrief du coach :</b> ${data.debrief.diagnostic}</p>
+                    <p class="text-green-600 font-bold mt-2">✅ Point fort : ${data.debrief.point_fort}</p>
+                    <p class="text-red-500 font-bold mt-2">❌ À corriger : ${data.debrief.a_corriger}</p>
+                `;
+            }
+        }
+
+        async function startCall() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } });
+                ensureAudioCtx();
+
+                // Charge le AudioWorklet (remplace ScriptProcessorNode déprécié)
+                await audioCtx.audioWorklet.addModule('/audio-processor.js');
+                const source = audioCtx.createMediaStreamSource(stream);
+                const workletNode = new AudioWorkletNode(audioCtx, 'pcm-processor');
+                source.connect(workletNode);
+                workletNode.connect(audioCtx.destination);
+
+                const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+                ws = new WebSocket(`${protocol}://${window.location.host}`);
+                ws.onopen = () => {
+                    // On envoie aussi le sampleRate réel pour que Deepgram reçoive la bonne valeur
+                    ws.send(JSON.stringify({ type: 'config', ...current, sampleRate: audioCtx.sampleRate }));
+                    document.getElementById('status-dot').className = "w-2 h-2 rounded-full bg-green-500 animate-pulse";
+                    document.getElementById('status-text').innerText = "En ligne";
+                    document.getElementById('state-msg').innerText = "Conversation établie";
+                    callIcon.setAttribute('data-lucide', 'phone-off');
+                    callIcon.classList.replace('text-green-500', 'text-red-500');
+                    liveContainer.classList.add('active');
+                    lucide.createIcons();
+                };
+
+                // Le worklet envoie les chunks PCM via postMessage
+                workletNode.port.onmessage = (e) => {
+                    if (ws?.readyState === WebSocket.OPEN && isCalling && !isPlaying) {
+                        ws.send(e.data);
+                    }
+                };
+
+                ws.onmessage = (e) => {
+                    const data = JSON.parse(e.data);
+                    
+                    if (data.type === 'interim_text') {
+                        liveSpeech.innerText = "🎤 " + data.value + (data.isFinal ? "" : "...");
+                        liveSpeech.className = "text-sm font-bold text-teal-600 italic text-center";
+                        liveSpeech.parentElement.scrollTop = liveSpeech.parentElement.scrollHeight;
+                        document.getElementById('status-dot').className = "w-2 h-2 rounded-full bg-teal-400 animate-pulse";
+                        document.getElementById('status-text').innerText = "Écoute en cours";
+                    }
+
+                    if (data.type === 'ia_thinking') {
+                        liveSpeech.innerText = "⏳ Client en train de réfléchir… ne parlez pas encore";
+                        liveSpeech.className = "text-sm font-bold text-orange-500 italic text-center animate-pulse";
+                        document.getElementById('status-dot').className = "w-2 h-2 rounded-full bg-orange-400 animate-pulse";
+                        document.getElementById('status-text').innerText = "IA en cours";
+                    }
+
+                    if (data.type === 'text') {
+                        liveSpeech.innerText = "⏳ Client en train de réfléchir… ne parlez pas encore";
+                        liveSpeech.className = "text-sm font-bold text-orange-500 italic text-center animate-pulse";
+                        document.getElementById('status-dot').className = "w-2 h-2 rounded-full bg-orange-400 animate-pulse";
+                        document.getElementById('status-text').innerText = "IA en cours";
+                        addLog('user', data.value);
+                    }
+
+                    if (data.type === 'ai_response') {
+                        liveSpeech.innerText = "🔊 Client en train de parler…";
+                        liveSpeech.className = "text-sm font-bold text-blue-500 italic text-center animate-pulse";
+                        document.getElementById('status-dot').className = "w-2 h-2 rounded-full bg-blue-400 animate-pulse";
+                        document.getElementById('status-text').innerText = "Client parle";
+                        addLog('ai', data.value);
+                        jaugeEl.style.width = (data.newScore * 10) + "%";
+                        scoreTxt.innerText = (data.newScore * 10) + "%";
+                    }
+
+                    if (data.type === 'audio') { 
+                        audioQueue.push(data.value); 
+                        if (!isPlaying) playNext(); 
+                    }
+
+                    if (data.type === 'game_over') {
+                        isCalling = false;
+                        
+                        // Si du son est en train d'être joué, on met le modal en file d'attente
+                        if (isPlaying || audioQueue.length > 0) {
+                            pendingGameOver = data;
+                        } else {
+                            showGameOverModal(data);
+                        }
+                    }
+                };
+            } catch(err) { alert("Erreur micro : " + err.message); isCalling = false; }
+        }
+
+        function addLog(type, text) {
+            const empty = chatLogs.querySelector('.italic');
+            if (empty) empty.remove();
+            
+            const div = document.createElement('div');
+            div.className = type === 'user' ? 'chat-bubble-user p-3' : 'chat-bubble-ai p-3';
+            div.innerHTML = `<span class="text-[7px] block font-black opacity-50 uppercase mb-1">${type === 'user' ? 'Vous' : 'Prospect'}</span>${text}`;
+            
+            chatLogs.prepend(div);
+            while (chatLogs.children.length > 2) chatLogs.removeChild(chatLogs.lastChild);
+        }
+
+        function playNext() {
+            if (audioQueue.length === 0) {
+                isPlaying = false;
+                document.getElementById('visualizer').classList.remove('speaking');
+                if (isCalling) {
+                    liveSpeech.innerText = "🎤 À vous de parler…";
+                    liveSpeech.className = "text-sm font-semibold text-green-500 italic text-center";
+                    document.getElementById('status-dot').className = "w-2 h-2 rounded-full bg-green-500 animate-pulse";
+                    document.getElementById('status-text').innerText = "En écoute";
+                }
+
+                // C'est ici que l'on vérifie si la partie était finie en attendant
+                if (pendingGameOver) {
+                    showGameOverModal(pendingGameOver);
+                    pendingGameOver = null;
+                }
+                return;
+            }
+            isPlaying = true; 
+            document.getElementById('visualizer').classList.add('speaking');
+            const a = new Audio("data:audio/mp3;base64," + audioQueue.shift());
+            a.onended = playNext;
+            a.onerror = () => { console.warn("⚠️ Audio ElevenLabs illisible, on continue."); playNext(); };
+            a.play().catch(() => playNext());
+        }
+
+        btnCall.onclick = () => { if(!isCalling) { isCalling = true; startCall(); } else location.reload(); };
+        updateUI();
+    </script>
+</body>
+</html>
