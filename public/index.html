@@ -80,8 +80,12 @@
                 
                 <div id="state-msg" class="text-slate-400 text-xs font-bold mb-4 h-4 uppercase tracking-tighter">Prêt pour l'appel</div>
                 
-                <button id="btn-call" class="w-24 h-24 rounded-full bg-white flex items-center justify-center shadow-2xl border-8 border-slate-50 hover:scale-105 active:scale-95 transition-all mb-8">
+                <button id="btn-call" class="w-24 h-24 rounded-full bg-white flex items-center justify-center shadow-2xl border-8 border-slate-50 hover:scale-105 active:scale-95 transition-all mb-4">
                     <i data-lucide="phone" class="w-10 h-10 text-green-500" id="call-icon"></i>
+                </button>
+
+                <button id="btn-fiche-produit" onclick="document.getElementById('modal-fiche-produit').classList.replace('hidden','flex')" class="mb-6 flex items-center gap-2 bg-teal-50 hover:bg-teal-100 border border-teal-200 text-teal-700 text-[11px] font-black uppercase tracking-widest px-4 py-2 rounded-full transition-all shadow-sm">
+                    <i data-lucide="file-text" class="w-3.5 h-3.5"></i> Fiche Produit
                 </button>
 
                 <div id="live-container" class="w-full live-transcription-glass rounded-2xl p-4 h-28 flex flex-col justify-center relative overflow-hidden">
@@ -115,6 +119,31 @@
             </div>
         </div>
     </main>
+
+    <!-- MODAL FICHE PRODUIT -->
+    <div id="modal-fiche-produit" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4" onclick="if(event.target===this) this.classList.replace('flex','hidden')">
+        <div class="bg-white rounded-[2rem] w-full max-w-4xl shadow-2xl border-t-8 overflow-hidden flex flex-col" style="max-height:92vh; border-top-color:#68012e;">
+            <!-- Header -->
+            <div class="flex justify-between items-center px-7 py-4" style="background:#68012e;">
+                <div>
+                    <span class="text-white font-black text-lg tracking-tight" style="font-family:'Plus Jakarta Sans',sans-serif;">CofiSecure</span>
+                    <span class="text-xs font-bold ml-3" style="color:#fdc100;">Fiche Produit</span>
+                </div>
+                <button onclick="document.getElementById('modal-fiche-produit').classList.replace('flex','hidden')" class="text-white/60 hover:text-white transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <!-- PDF iframe -->
+            <iframe src="/Fiche_Produit_CofiSecure.pdf" class="w-full flex-1" style="min-height:75vh; border:none;"></iframe>
+            <!-- Footer -->
+            <div class="flex justify-between items-center px-7 py-3 border-t border-slate-100 bg-slate-50">
+                <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-widest">Usage interne — Formation Commerciale</span>
+                <a href="/Fiche_Produit_CofiSecure.pdf" download class="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-widest px-4 py-2 rounded-full transition-all shadow-sm text-white" style="background:#e40041;">
+                    <i data-lucide="download" class="w-3.5 h-3.5"></i> Télécharger
+                </a>
+            </div>
+        </div>
+    </div>
 
     <!-- MODAL DEBRIEF -->
     <div id="modal-debrief" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
@@ -433,7 +462,18 @@
             a.play().catch(() => playNext());
         }
 
-        btnCall.onclick = () => { if(!isCalling) { isCalling = true; startCall(); } else location.reload(); };
+        const btnFicheProduit = document.getElementById('btn-fiche-produit');
+
+        btnCall.onclick = () => {
+            if (!isCalling) {
+                isCalling = true;
+                // Masquer le bouton Fiche Produit une fois l'appel lancé
+                btnFicheProduit.style.display = 'none';
+                startCall();
+            } else {
+                location.reload();
+            }
+        };
         updateUI();
     </script>
 </body>
