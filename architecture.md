@@ -73,6 +73,10 @@ Simulateur Vocal/
 - [x] Débrief upsell : félicite uniquement si David propose une mensualité > 10,90€ (pas juste 84.000€)
 - [x] Raccrochage d'urgence (`raccroche_immediat`) indépendant de la jauge
 - [x] Déployé sur Render (Frankfurt EU Central, Free tier)
+- [x] Bouton "Fiche Produit" dans l'UI — visible avant l'appel, masqué au lancement (`btnFicheProduit.style.display='none'`)
+- [x] Fiche Produit PDF (charte graphique Cofidis : rouge #e40041, bordeaux #68012e, jaune #fdc100, pastels) — servie depuis `public/Fiche_Produit_CofiSecure.pdf`
+- [x] Modal Fiche Produit avec iframe PDF (`#navpanes=0&view=FitH`), header bordeaux, bouton téléchargement rouge
+- [x] Fix audio iOS Safari : lecture ElevenLabs via `AudioContext.decodeAudioData` (contourne la restriction autoplay iOS sur `new Audio().play()`)
 
 ---
 
