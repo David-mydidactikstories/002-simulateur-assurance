@@ -636,6 +636,28 @@ RÉPONDS UNIQUEMENT EN JSON : {"reponse": "phrase orale courte", "variation": en
             // Prononciation des noms de marque pour ElevenLabs
             .replace(/\bCofidis\b/gi, 'Cofi-diss')
             .replace(/\bCofiSecure\b/gi, 'Cofi-Sécure')
+            // ── Filet de sécurité Belgian French ──────────────────────────────
+            // Gemini écrit parfois en français standard malgré les instructions.
+            // On corrige AVANT l'envoi à ElevenLabs pour garantir la prononciation belge.
+            .replace(/\bquatre[\s-]vingt[\s-]dix[\s-](neuf|huit|sept|six|cinq|quatre|trois|deux|un)\b/gi, (m, u) => {
+                const map = { neuf:'nonante-neuf', huit:'nonante-huit', sept:'nonante-sept',
+                              six:'nonante-six', cinq:'nonante-cinq', quatre:'nonante-quatre',
+                              trois:'nonante-trois', deux:'nonante-deux', un:'nonante et un' };
+                return map[u.toLowerCase()] || m;
+            })
+            .replace(/\bquatre[\s-]vingt[\s-]dix\b/gi, 'nonante')
+            .replace(/\bquatre[\s-]vingt[\s-]onze\b/gi, 'nonante et un')
+            .replace(/\bsoixante[\s-]et[\s-]onze\b/gi, 'septante et un')
+            .replace(/\bsoixante[\s-]dix[\s-](neuf|huit|sept|six|cinq|quatre|trois|deux)\b/gi, (m, u) => {
+                const map = { neuf:'septante-neuf', huit:'septante-huit', sept:'septante-sept',
+                              six:'septante-six', cinq:'septante-cinq', quatre:'septante-quatre',
+                              trois:'septante-trois', deux:'septante-deux' };
+                return map[u.toLowerCase()] || m;
+            })
+            .replace(/\bsoixante[\s-]dix\b/gi, 'septante')
+            // Override explicite 10,90 sans symbole (Gemini peut écrire le chiffre seul)
+            .replace(/\b10[,.]90\b(?!\s*(?:€|euros?))/gi, 'dix euros et nonante centimes')
+            // ──────────────────────────────────────────────────────────────────
             // Overrides phonétiques pour les montants du produit — ElevenLabs les prononce plus naturellement en chiffres
             .replace(/84[\s.]?000\s*(?:€|euros?)?/gi, 'quatre-vingt-quatre mille euros')
             .replace(/42[\s.]?000\s*(?:€|euros?)?/gi, 'quarante-deux mille euros')
@@ -643,7 +665,7 @@ RÉPONDS UNIQUEMENT EN JSON : {"reponse": "phrase orale courte", "variation": en
             .replace(/70[\s.]?000\s*(?:€|euros?)?/gi, 'septante mille euros')
             .replace(/112[\s.]?000\s*(?:€|euros?)?/gi, 'cent douze mille euros')
             .replace(/140[\s.]?000\s*(?:€|euros?)?/gi, 'cent quarante mille euros')
-            .replace(/168[\s.]?000\s*(?:€|euros?)?/gi, 'cent soixante-huit mille euros')
+            .replace(/168[\s.]?000\s*(?:€|euros?)?/gi, 'cent soixante-huit mille euros')   // 168 = 100+68, pas de belgicisme ici
             .replace(/224[\s.]?000\s*(?:€|euros?)?/gi, 'deux cent vingt-quatre mille euros')
             .replace(/280[\s.]?000\s*(?:€|euros?)?/gi, 'deux cent quatre-vingt mille euros')
             // Montants avec point de milliers : 42.000€ → quarante-deux mille euros

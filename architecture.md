@@ -77,6 +77,7 @@ Simulateur Vocal/
 - [x] Fiche Produit PDF (charte graphique Cofidis : rouge #e40041, bordeaux #68012e, jaune #fdc100, pastels) — servie depuis `public/Fiche_Produit_CofiSecure.pdf`
 - [x] Modal Fiche Produit avec iframe PDF (`#navpanes=0&view=FitH`), header bordeaux, bouton téléchargement rouge
 - [x] Fix audio iOS Safari : lecture ElevenLabs via `AudioContext.decodeAudioData` (contourne la restriction autoplay iOS sur `new Audio().play()`)
+- [x] Filet de sécurité Belgian French dans `preparerTexteVoix` : si Gemini écrit "quatre-vingt-dix" ou "soixante-dix" malgré les instructions, conversion automatique → "nonante" / "septante" avant envoi à ElevenLabs
 
 ---
 
