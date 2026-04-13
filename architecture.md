@@ -78,6 +78,7 @@ Simulateur Vocal/
 - [x] Modal Fiche Produit avec iframe PDF (`#navpanes=0&view=FitH`), header bordeaux, bouton téléchargement rouge
 - [x] Fix audio iOS Safari : lecture ElevenLabs via `AudioContext.decodeAudioData` (contourne la restriction autoplay iOS sur `new Audio().play()`)
 - [x] Filet de sécurité Belgian French dans `preparerTexteVoix` : si Gemini écrit "quatre-vingt-dix" ou "soixante-dix" malgré les instructions, conversion automatique → "nonante" / "septante" avant envoi à ElevenLabs
+- [x] Élisions orales renforcées dans `SHORT_PROMPT_RULE` : liste explicite de transformations obligatoires (j'sais pas, t'as, y'a, vous m'voulez, j'comprends pas…) pour éviter le rendu robotisé : si Gemini écrit "quatre-vingt-dix" ou "soixante-dix" malgré les instructions, conversion automatique → "nonante" / "septante" avant envoi à ElevenLabs
 
 ---
 

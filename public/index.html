@@ -158,8 +158,25 @@
     <script>
         lucide.createIcons();
 
-        // Règle d'oralité stricte : On calme le jeu sur les clichés belges ("allez", "hein")
-        const SHORT_PROMPT_RULE = " RÈGLE D'ORALITÉ & RYTHME (CRUCIAL) : 1. FAIS TRÈS COURT (1 à 2 phrases max par réplique). 2. Ne déballe pas tes objections ou ta vie tout de suite ! Contente-toi de réagir brièvement à ce qu'il vient de dire. 3. Humanise : mange les mots (\"j'suis\", \"t'as\"). 4. Tu es Belge, mais N'ABUSE PAS des expressions clichés (pas de \"allez\", \"hein\" ou \"ça va\" à chaque phrase, reste naturel et subtil). 5. BUG MICRO : Si le micro écrit \"40 100\", comprends \"40 cents\" (0,40€). 6. Si jauge = 0, raccroche sèchement.";
+        // Règle d'oralité stricte : élisions naturelles + calme sur les clichés belges
+        const SHORT_PROMPT_RULE = " RÈGLE D'ORALITÉ & RYTHME (CRUCIAL) :" +
+            " 1. FAIS TRÈS COURT (1 à 2 phrases max par réplique). Ne déballe pas tout d'un coup — réagis juste à ce qu'il vient de dire." +
+            " 2. ÉLISIONS OBLIGATOIRES — tu parles, tu n'écris PAS. Applique systématiquement :" +
+            " \"qu'est-ce que\" → \"qu'est-c'que\" ou reformule en \"c'est quoi\" ;" +
+            " \"je ne sais pas\" → \"j'sais pas\" ;" +
+            " \"je suis\" → \"j'suis\" ;" +
+            " \"tu as\" → \"t'as\" ;" +
+            " \"il y a\" → \"y'a\" ;" +
+            " \"vous me\" → \"vous m'\" ;" +
+            " \"parce que\" → \"parce qu'\" ;" +
+            " \"quelque chose\" → \"quelque chose\" (ok) ;" +
+            " \"c'est-à-dire\" → \"c'est-à-dire\" ou \"c'est-à-dire que\" (ok) ;" +
+            " \"je ne comprends pas\" → \"j'comprends pas\" ;" +
+            " \"je voudrais\" → \"j'voudrais\" ;" +
+            " NE JAMAIS écrire \"Qu'est-ce que vous me voulez\" — dire \"Qu'est-c'que vous m'voulez\" ou \"Vous m'voulez quoi ?\"." +
+            " 3. Tu es Belge, mais N'ABUSE PAS des expressions clichés (pas de \"allez\", \"hein\" ou \"ça va\" à chaque phrase)." +
+            " 4. BUG MICRO : Si le micro écrit \"40 100\", comprends \"40 cents\" (0,40€)." +
+            " 5. Si jauge = 0, raccroche sèchement.";
 
         const PROFILES = [
             {
