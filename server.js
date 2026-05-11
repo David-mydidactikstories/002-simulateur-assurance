@@ -121,7 +121,10 @@ wss.on('connection', (ws) => {
         isConnecting = true;
         
         const sampleRate = parseInt(currentConfig.sampleRate) || 16000;
-        const deepgramUrl = `wss://api.deepgram.com/v1/listen?model=nova-2&language=fr&smart_format=true&interim_results=true&encoding=linear16&sample_rate=${sampleRate}&endpointing=300&utterance_end_ms=1000&vad_events=true&keepalive=true`;
+        // utterance_end_ms=1500 : compromis entre réactivité (1000 = trop agressif, coupait sur les respirations)
+        // et latence raisonnable (2000 = trop lent). À ce seuil, une pause normale pour souffler ou réfléchir
+        // ne déclenche pas la réponse du client, mais on garde ~500 ms de gain vs config d'origine.
+        const deepgramUrl = `wss://api.deepgram.com/v1/listen?model=nova-2&language=fr&smart_format=true&interim_results=true&encoding=linear16&sample_rate=${sampleRate}&endpointing=300&utterance_end_ms=1500&vad_events=true&keepalive=true`;
         console.log(`🎙️ Deepgram URL : ${deepgramUrl}`);
         
         dgConnection = new WebSocket(deepgramUrl, { headers: { Authorization: `Token ${dgKey}` } });
