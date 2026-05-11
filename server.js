@@ -44,6 +44,10 @@ function corrigerTranscription(texte) {
         [/\bcoff(?:ee|i|y)?[\s-]?(?:ce|se|s)\s*(?:en\s*ligne|online)?\b/gi, 'Cofidis'],
         [/confidis/gi, 'Cofidis'],
         [/\bcoffee\b/gi, 'Cofidis'],
+        // Variantes plus exotiques entendues quand David prononce vite "Cofidis"
+        // → "kochiis", "kochi", "cochis", "cauchi", "coqui", "couchi", "kotchi", "ko-chi-dis"…
+        [/\b[ck](?:o|au|ou)(?:t|c|q)?(?:ch|qu|sh)i+[sz]?(?:[\s-]?di[sz]?)?\b/gi, 'Cofidis'],
+        [/\bk(?:o|au|ou)t[\s-]?ch[iy]+(?:[\s-]?di[sz]?)?\b/gi, 'Cofidis'],
         [/\bJulia\b|\bJules\b/gi, 'Julien'],
         [/\b(Morel|Maesse|Maes|Mas)\b/gi, 'Masse'],
         // Centimes (Deepgram transcrit souvent "centiles", "centile", "sentimes")
@@ -359,9 +363,16 @@ LANGUE — FRANÇAIS DE BELGIQUE :
 
 BUGS MICRO (sois indulgent) :
 • "Julia/Jules" → Julien | "Morel/Mas/Maesse" → Masse
-• "Que finisse/Coffee/Confidis" → Cofidis | "Copie Secure/Copie Sécure/Coffee Secure" → CofiSecure
+• "Que finisse/Coffee/Confidis/Kochiis/Kochi/Cochis/Cauchi/Coqui/Couchi/Kotchi" → Cofidis | "Copie Secure/Copie Sécure/Coffee Secure/Kofisecure" → CofiSecure
 • "40 100" → "40 cents" (0,40€) — NE PAS pénaliser
-• NE JAMAIS corriger ou reprendre David sur la prononciation d'un mot. Si tu comprends l'intention, tu réponds normalement sans signaler l'erreur.
+
+🚨 RÈGLE ABSOLUE — JAMAIS PINAILLER SUR UN MOT BIZARRE 🚨
+Le contexte est TOUJOURS le même : David t'appelle au nom de Cofidis pour parler de CofiSecure. Rien d'autre n'existe.
+• Si tu reçois un mot qui ressemble vaguement à une société de crédit (kochiis, cochis, kotchi, coqui, couchi, etc.) → c'est forcément Cofidis. Tu réponds normalement comme si tu avais entendu "Cofidis".
+• Si tu reçois un mot qui ressemble vaguement à un produit d'assurance (kofisecure, copie secure, etc.) → c'est forcément CofiSecure.
+• INTERDIT de citer, répéter, ou écrire le mot bizarre dans ta réponse. INTERDIT de dire "vous m'avez dit X". INTERDIT de demander "vous êtes sûr ?", "c'est pas plutôt ?", "c'est quoi votre société exactement ?".
+• Si David confirme un nom après une question de ta part, le sujet est CLOS — tu ne reviens JAMAIS dessus, même si la prononciation t'a paru bizarre une demi-seconde plus tôt.
+• Violation de cette règle = comportement INACCEPTABLE pour le simulateur. Sois fluide, fais semblant d'avoir compris, passe à autre chose.
 
 RACCROCHAGE D'URGENCE (indépendant de la jauge) :
 Si David fait l'une de ces choses — peu importe le score actuel — tu raccroches IMMÉDIATEMENT :
