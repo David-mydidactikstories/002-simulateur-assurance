@@ -117,7 +117,7 @@ wss.on('connection', (ws) => {
         isConnecting = true;
         
         const sampleRate = parseInt(currentConfig.sampleRate) || 16000;
-        const deepgramUrl = `wss://api.deepgram.com/v1/listen?model=nova-2&language=fr&smart_format=true&interim_results=true&encoding=linear16&sample_rate=${sampleRate}&endpointing=false&utterance_end_ms=2000&vad_events=true&keepalive=true`;
+        const deepgramUrl = `wss://api.deepgram.com/v1/listen?model=nova-2&language=fr&smart_format=true&interim_results=true&encoding=linear16&sample_rate=${sampleRate}&endpointing=300&utterance_end_ms=1000&vad_events=true&keepalive=true`;
         console.log(`🎙️ Deepgram URL : ${deepgramUrl}`);
         
         dgConnection = new WebSocket(deepgramUrl, { headers: { Authorization: `Token ${dgKey}` } });
@@ -717,8 +717,11 @@ RÉPONDS UNIQUEMENT EN JSON : {"reponse": "phrase orale courte", "variation": en
         if (!elevenKey || !currentConfig.voiceId) return;
         try {
             const texteVoix = preparerTexteVoix(texte);
-            console.log(`🔊 TTS : "${texteVoix}"`);
-            const url = `https://api.elevenlabs.io/v1/text-to-speech/${currentConfig.voiceId}?output_format=mp3_22050_32&optimize_streaming_latency=4`;
+            console.log(`🔊 TTS (stream PCM) : "${texteVoix}"`);
+            // /stream endpoint + PCM 22050 Hz : on reçoit l'audio en chunks dès que ElevenLabs commence à le générer
+            // → première syllabe entendue ~1 seconde plus tôt vs MP3 complet en une trame
+            const TTS_SAMPLE_RATE = 22050;
+            const url = `https://api.elevenlabs.io/v1/text-to-speech/${currentConfig.voiceId}/stream?output_format=pcm_${TTS_SAMPLE_RATE}&optimize_streaming_latency=4`;
             const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'xi-api-key': elevenKey, 'Content-Type': 'application/json' },
@@ -728,9 +731,25 @@ RÉPONDS UNIQUEMENT EN JSON : {"reponse": "phrase orale courte", "variation": en
                 const errText = await response.text();
                 throw new Error(`ElevenLabs ${response.status}: ${errText}`);
             }
-            const buffer = await response.arrayBuffer();
-            safeSend({ type: 'audio', value: Buffer.from(buffer).toString('base64') });
-        } catch (e) { console.error("❌ Erreur ElevenLabs:", e.message); }
+            // Signale au frontend qu'un flux audio démarre
+            safeSend({ type: 'audio_start', sampleRate: TTS_SAMPLE_RATE });
+            // Lit les chunks PCM au fur et à mesure qu'ils arrivent d'ElevenLabs et les forward au navigateur
+            const reader = response.body.getReader();
+            let totalBytes = 0;
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                if (!value || value.length === 0) continue;
+                totalBytes += value.length;
+                safeSend({ type: 'audio_chunk', value: Buffer.from(value).toString('base64') });
+            }
+            safeSend({ type: 'audio_end' });
+            console.log(`🔊 TTS terminé : ${totalBytes} octets envoyés en streaming`);
+        } catch (e) {
+            console.error("❌ Erreur ElevenLabs:", e.message);
+            // En cas d'erreur après audio_start, on signale la fin pour débloquer le frontend
+            safeSend({ type: 'audio_end' });
+        }
     };
 
     ws.on('message', (msg) => {
