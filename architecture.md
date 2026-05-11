@@ -1,5 +1,5 @@
 # SIMULATEUR VOCAL COFISECURE — MDS
-## Architecture & État du projet (mis à jour avril 2026)
+## Architecture & État du projet (mis à jour mai 2026)
 
 ---
 
@@ -34,9 +34,9 @@ Render redéploie automatiquement en 2-3 minutes après chaque push.
 **Backend :** `server.js` — Node.js + Express + WebSocket (`ws`)
 
 **IA Trio :**
-- **STT** : Deepgram Nova-2 streaming (`wss://`) — `nova-2`, `fr`, `utterance_end_ms=2000`
+- **STT** : Deepgram Nova-2 streaming (`wss://`) — `nova-2`, `fr`, `utterance_end_ms=1500`, `endpointing=300`
 - **LLM** : Gemini 2.5-flash-lite REST API — JSON mode, historique glissant
-- **TTS** : ElevenLabs REST — `eleven_turbo_v2_5`, `mp3_22050_32`, speed 0.93
+- **TTS** : ElevenLabs streaming (`/stream` endpoint) — `eleven_turbo_v2_5`, `pcm_22050`, `optimize_streaming_latency=4`, speed 0.93. Chunks PCM 16 bits LE forwardés vers le navigateur via WebSocket (`audio_start` → N × `audio_chunk` → `audio_end`).
 
 ---
 
@@ -76,9 +76,14 @@ Simulateur Vocal/
 - [x] Bouton "Fiche Produit" dans l'UI — visible avant l'appel, masqué au lancement (`btnFicheProduit.style.display='none'`)
 - [x] Fiche Produit PDF (charte graphique Cofidis : rouge #e40041, bordeaux #68012e, jaune #fdc100, pastels) — servie depuis `public/Fiche_Produit_CofiSecure.pdf`
 - [x] Modal Fiche Produit avec iframe PDF (`#navpanes=0&view=FitH`), header bordeaux, bouton téléchargement rouge
-- [x] Fix audio iOS Safari : lecture ElevenLabs via `AudioContext.decodeAudioData` (contourne la restriction autoplay iOS sur `new Audio().play()`)
+- [x] Fix audio iOS Safari : lecture via Web Audio API (`AudioBuffer` + `AudioBufferSourceNode`), jamais `new Audio().play()` qui est bloqué hors geste utilisateur
 - [x] Filet de sécurité Belgian French dans `preparerTexteVoix` : si Gemini écrit "quatre-vingt-dix" ou "soixante-dix" malgré les instructions, conversion automatique → "nonante" / "septante" avant envoi à ElevenLabs
-- [x] Élisions orales renforcées dans `SHORT_PROMPT_RULE` : liste explicite de transformations obligatoires (j'sais pas, t'as, y'a, vous m'voulez, j'comprends pas…) pour éviter le rendu robotisé : si Gemini écrit "quatre-vingt-dix" ou "soixante-dix" malgré les instructions, conversion automatique → "nonante" / "septante" avant envoi à ElevenLabs
+- [x] Élisions orales renforcées dans `SHORT_PROMPT_RULE` : liste explicite de transformations obligatoires (j'sais pas, t'as, y'a, vous m'voulez, j'comprends pas…) pour éviter le rendu robotisé
+- [x] **TTS streaming PCM (mai 2026)** : passage de MP3 complet (un seul blob base64) à PCM 22050 streamé chunk par chunk. Première syllabe entendue ~1 s plus tôt. Frontend décode Int16 LE → Float32 → AudioBuffer programmé via `nextPlayTime` pour une lecture continue.
+- [x] **Alignement octets PCM entre chunks (mai 2026)** : variable `pcmLeftoverByte` côté frontend qui garde l'octet orphelin d'un chunk impair pour le recoller au chunk suivant. Sans ça, désalignement 1-octet sur tous les samples suivants → friture audible.
+- [x] **Réactivité Deepgram (mai 2026)** : `utterance_end_ms` passé de 2000 ms à 1500 ms (sweet spot entre lenteur perçue et coupures sur respiration). `endpointing=300` réactivé pour finalisation plus rapide des chunks intermédiaires.
+- [x] **Robustesse transcription Cofidis (mai 2026)** : nouvelles regex dans `corrigerTranscription` qui attrapent les variantes phonétiques exotiques (kochiis, kochi, cochis, cauchi, coqui, couchi, kotchi…) AVANT que Gemini ne les voie. Testé avec faux positifs (cotisation, couchette, cocher, cauchemar, couscous) — pas de collision.
+- [x] **Règle absolue anti-pinaillage (mai 2026)** : ajout dans le prompt client live d'une interdiction explicite de citer/répéter/questionner un mot bizarre. Si David confirme un nom après une question du client, le sujet est CLOS, le client n'y revient JAMAIS.
 
 ---
 
@@ -140,6 +145,7 @@ Simulateur Vocal/
 - `coffee` / `coffeedis` / `confidis` → **Cofidis**
 - `coffeecure` / `copie secure` / `kofisecure` → **CofiSecure**
 - `coffee [chiffre]` / `coffee [chiffre] en ligne` → **Cofidis**
+- `kochiis` / `kochi` / `cochis` / `cauchi` / `coqui` / `couchi` / `kotchi` / `kotchidis` → **Cofidis** *(ajouté mai 2026)*
 - `centiles` / `sentimes` / `santimes` → **centimes**
 - `Julia` / `Jules` → **Julien**
 - `Morel` / `Maesse` / `Mas` → **Masse**
